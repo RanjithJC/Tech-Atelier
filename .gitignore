@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-﻿# Generated datasets
-=======
 # Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[codz]
+*.py[cod]
 *$py.class
 
 # C extensions
@@ -207,7 +204,6 @@ cython_debug/
 tempCodeRunnerFile.py
 @"
 # Generated datasets
->>>>>>> origin/main
 data/*.csv
 
 # Trained machine-learning models
@@ -220,11 +216,19 @@ __pycache__/
 # Virtual environments
 venv/
 .venv/
+env/
+ENV/
 
-# Jupyter
+# Python packaging
+*.egg-info/
+dist/
+build/
+
+# ============================================================
+# JUPYTER / COLAB
+# ============================================================
+
 .ipynb_checkpoints/
-<<<<<<< HEAD
-=======
 "@ | Out-File -Encoding utf8 .gitignore
 
 # Ruff stuff:
@@ -240,4 +244,3 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
->>>>>>> origin/main
