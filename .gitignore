@@ -6,28 +6,22 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Python cache / compiled files
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
-
 # Virtual environments
-.venv/
 venv/
+.venv/
 env/
 ENV/
-env.bak/
-venv.bak/
 
+# Python packaging
+*.egg-info/
+dist/
+build/
 
 # ============================================================
 # JUPYTER / COLAB
 # ============================================================
 
 .ipynb_checkpoints/
-
 
 # ============================================================
 # VS CODE
@@ -36,72 +30,51 @@ venv.bak/
 .vscode/
 *.code-workspace
 
-
 # ============================================================
-# PYCHARM / OTHER IDEs
+# PYCHARM
 # ============================================================
 
 .idea/
-*.iml
-
 
 # ============================================================
 # DATASETS
 # ============================================================
-#
-# Generated datasets should NOT be uploaded to GitHub.
-# They can be regenerated using generate_dataset.py
-# and the preparation/label scripts.
-#
 
+# Generated CSV datasets
 data/*.csv
-data/*.xlsx
-data/*.xls
-data/*.json
-data/*.parquet
 
+# Keep the folder in Git
+!data/.gitkeep
 
 # ============================================================
 # MACHINE LEARNING MODELS
 # ============================================================
-#
-# Large trained models should NOT be stored in Git.
-# They can be regenerated using the training scripts.
-#
 
+# Generated model files
 models/*.pkl
 models/*.joblib
-models/*.h5
-models/*.keras
-models/*.pt
-models/*.pth
-models/*.onnx
 
+# Keep the folder in Git
+!models/.gitkeep
 
 # ============================================================
 # LOGS
 # ============================================================
 
 *.log
-logs/
-
 
 # ============================================================
-# ENVIRONMENT / SECRETS
+# TEMPORARY FILES
 # ============================================================
 
-.env
-.env.*
-!.env.example
-
-*.secret
-secrets/
-credentials/
-credentials.json
-
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
 
 # ============================================================
-# OPERATING SYSTEM
+# OS FILES
 # ============================================================
 
 # Windows
@@ -115,47 +88,29 @@ Desktop.ini
 # Linux
 *~
 
-
 # ============================================================
-# TEMPORARY FILES
-# ============================================================
-
-*.tmp
-*.temp
-*.bak
-*.swp
-*.swo
-
-tmp/
-temp/
-
-
-# ============================================================
-# BUILD / DISTRIBUTION
+# ENVIRONMENT / SECRETS
 # ============================================================
 
-build/
-dist/
-*.egg-info/
-.eggs/
-
+.env
+.env.*
+!.env.example
 
 # ============================================================
-# LARGE GENERATED FILES
+# LARGE / GENERATED FILES
 # ============================================================
 
 *.zip
-*.rar
-*.7z
 *.tar
 *.gz
-
+*.7z
 
 # ============================================================
-# LOCAL EXPERIMENTS
+# PYTHON CACHE / TEST
 # ============================================================
 
-experiments/
-outputs/
-results/
-checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
