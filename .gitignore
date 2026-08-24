@@ -208,7 +208,10 @@ data/*.csv
 
 # Trained machine-learning models
 models/*.pkl
-
+# Allow the final trained model
+!models/stress_risk_model_v3.pkl
+!models/stress_risk_features_v3.pkl
+!models/stress_risk_metadata_v3.pkl
 # Python cache
 __pycache__/
 *.pyc
