@@ -202,6 +202,24 @@ cython_debug/
 # .vscode/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
+@"
+# Generated datasets
+data/*.csv
+
+# Trained machine-learning models
+models/*.pkl
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+"@ | Out-File -Encoding utf8 .gitignore
 
 # Ruff stuff:
 .ruff_cache/
