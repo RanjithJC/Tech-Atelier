@@ -3,7 +3,8 @@ import numpy as np
 import os
 
 # ============================================================
-# PERSONNEL STRESS & WELFARE - SYNTHETIC DATASET GENERATOR
+# PERSONNEL STRESS & WELFARE
+# TEMPORALLY CORRELATED SYNTHETIC DATASET GENERATOR
 # ============================================================
 
 np.random.seed(42)
@@ -15,11 +16,12 @@ np.random.seed(42)
 NUM_PERSONNEL = 5000
 NUM_WEEKS = 12
 
-# Create data folder if it doesn't exist
 os.makedirs("data", exist_ok=True)
 
-# Anonymous personnel IDs
-personnel_ids = [f"P{i:04d}" for i in range(1, NUM_PERSONNEL + 1)]
+personnel_ids = [
+    f"P{i:04d}"
+    for i in range(1, NUM_PERSONNEL + 1)
+]
 
 
 # ============================================================
@@ -31,7 +33,11 @@ hr_records = []
 for pid in personnel_ids:
 
     age = np.random.randint(21, 51)
-    service_years = np.random.randint(1, max(2, age - 20))
+
+    service_years = np.random.randint(
+        1,
+        max(2, age - 20)
+    )
 
     rank_level = np.random.choice(
         ["Junior", "Intermediate", "Senior"],
@@ -54,6 +60,7 @@ for pid in personnel_ids:
         round(training_hours, 1)
     ])
 
+
 hr_df = pd.DataFrame(
     hr_records,
     columns=[
@@ -66,7 +73,10 @@ hr_df = pd.DataFrame(
     ]
 )
 
-hr_df.to_csv("data/hr_data.csv", index=False)
+hr_df.to_csv(
+    "data/hr_data.csv",
+    index=False
+)
 
 
 # ============================================================
@@ -89,6 +99,7 @@ for pid in personnel_ids:
         deployment_frequency,
         operational_exposure
     ])
+
 
 deployment_df = pd.DataFrame(
     deployment_records,
@@ -116,9 +127,15 @@ for pid in personnel_ids:
 
     leave_days = np.random.randint(0, 16)
 
-    days_since_leave = np.random.randint(5, 91)
+    days_since_leave = np.random.randint(
+        5,
+        91
+    )
 
-    leave_frequency = np.random.randint(0, 5)
+    leave_frequency = np.random.randint(
+        0,
+        5
+    )
 
     leave_records.append([
         pid,
@@ -126,6 +143,7 @@ for pid in personnel_ids:
         days_since_leave,
         leave_frequency
     ])
+
 
 leave_df = pd.DataFrame(
     leave_records,
@@ -146,16 +164,59 @@ leave_df.to_csv(
 # ============================================================
 # 4. WEEKLY WORKLOAD DATA
 # ============================================================
+#
+# Workload now evolves over time.
+#
+# High latent stress → somewhat higher workload
+# Low latent stress  → somewhat lower workload
+#
+# There is still random variation so the dataset doesn't
+# become artificially deterministic.
+# ============================================================
 
 workload_records = []
 
+# Store latent workload state for each person
+workload_state = {}
+
 for pid in personnel_ids:
 
-    for week in range(1, NUM_WEEKS + 1):
+    workload_state[pid] = np.random.normal(
+        0,
+        1
+    )
 
-        duty_hours = np.random.randint(35, 71)
+    for week in range(
+        1,
+        NUM_WEEKS + 1
+    ):
 
-        consecutive_duty_days = np.random.randint(2, 15)
+        # Gradual workload evolution
+        workload_state[pid] = (
+
+            0.75 * workload_state[pid]
+
+            + 0.25 * np.random.normal(
+                0,
+                1
+            )
+        )
+
+        duty_hours = np.clip(
+            50
+            + workload_state[pid] * 6
+            + np.random.normal(0, 4),
+            35,
+            75
+        )
+
+        consecutive_duty_days = np.clip(
+            7
+            + workload_state[pid] * 1.8
+            + np.random.normal(0, 2),
+            2,
+            14
+        )
 
         overtime_hours = max(
             0,
@@ -163,9 +224,10 @@ for pid in personnel_ids:
         )
 
         workload_score = np.clip(
-            2
-            + (duty_hours - 40) / 7
-            + np.random.normal(0, 1.2),
+            5
+            + workload_state[pid] * 1.2
+            + (duty_hours - 50) / 10
+            + np.random.normal(0, 0.7),
             1,
             10
         )
@@ -173,11 +235,12 @@ for pid in personnel_ids:
         workload_records.append([
             pid,
             week,
-            duty_hours,
-            consecutive_duty_days,
-            overtime_hours,
+            round(duty_hours, 1),
+            round(consecutive_duty_days, 1),
+            round(overtime_hours, 1),
             round(workload_score, 1)
         ])
+
 
 workload_df = pd.DataFrame(
     workload_records,
@@ -198,53 +261,174 @@ workload_df.to_csv(
 
 
 # ============================================================
-# 5. WELLNESS SURVEY DATA
+# 5. WELLNESS DATA
+# ============================================================
+#
+# This is the most important change.
+#
+# Each person has a latent welfare state that evolves from
+# one week to the next.
+#
+# Higher state:
+#   ↓ sleep
+#   ↑ fatigue
+#   ↑ stress
+#   ↓ mood
+#   ↑ emotional exhaustion
+#
+# Lower state:
+#   ↑ sleep
+#   ↓ fatigue
+#   ↓ stress
+#   ↑ mood
 # ============================================================
 
 wellness_records = []
 
+# Individual baseline + evolving stress state
+stress_state = {}
+
 for pid in personnel_ids:
 
-    # Individual baseline characteristics
-    personal_stress_factor = np.random.normal(0, 1)
+    # Stable individual characteristic
+    personal_baseline = np.random.normal(
+        0,
+        0.7
+    )
 
-    for week in range(1, NUM_WEEKS + 1):
+    # Starting welfare state
+    stress_state[pid] = np.random.normal(
+        0,
+        0.6
+    )
+
+    for week in range(
+        1,
+        NUM_WEEKS + 1
+    ):
+
+        # Get corresponding workload
+        row = workload_df[
+            (workload_df["personnel_id"] == pid)
+            &
+            (workload_df["week"] == week)
+        ].iloc[0]
+
+        workload_pressure = (
+            row["workload_score"] - 5
+        )
+
+        # ----------------------------------------------------
+        # OCCASIONAL SHOCKS
+        # ----------------------------------------------------
+
+        shock = 0
+
+        # Around 8% chance of a stressful event
+        if np.random.random() < 0.08:
+
+            shock = np.random.uniform(
+                0.8,
+                2.0
+            )
+
+        # Around 5% chance of recovery event
+        if np.random.random() < 0.05:
+
+            shock -= np.random.uniform(
+                0.8,
+                1.8
+            )
+
+        # ----------------------------------------------------
+        # UPDATE STRESS STATE
+        # ----------------------------------------------------
+
+        stress_state[pid] = (
+
+            0.78 * stress_state[pid]
+
+            + 0.20 * workload_pressure
+
+            + 0.10 * personal_baseline
+
+            + shock
+
+            + np.random.normal(
+                0,
+                0.35
+            )
+        )
+
+        # Keep latent state within reasonable limits
+        stress_state[pid] = np.clip(
+            stress_state[pid],
+            -4,
+            5
+        )
+
+        s = stress_state[pid]
+
+        # ----------------------------------------------------
+        # SLEEP
+        # ----------------------------------------------------
 
         sleep_hours = np.clip(
-            np.random.normal(7, 0.8),
+            7.2
+            - 0.55 * s
+            + np.random.normal(0, 0.35),
             4,
             9
         )
 
+        # ----------------------------------------------------
+        # FATIGUE
+        # ----------------------------------------------------
+
         fatigue_score = np.clip(
-            5
-            - (sleep_hours - 6.5)
-            + personal_stress_factor
-            + np.random.normal(0, 1),
+            4.5
+            + 1.0 * s
+            + 0.4 * (
+                7 - sleep_hours
+            )
+            + np.random.normal(0, 0.6),
             1,
             10
         )
+
+        # ----------------------------------------------------
+        # STRESS SCORE
+        # ----------------------------------------------------
 
         stress_score = np.clip(
             5
-            + personal_stress_factor
-            + np.random.normal(0, 1.5),
+            + 0.9 * s
+            + np.random.normal(0, 0.6),
             1,
             10
         )
+
+        # ----------------------------------------------------
+        # MOOD
+        # ----------------------------------------------------
 
         mood_score = np.clip(
-            8
-            - stress_score * 0.45
-            + np.random.normal(0, 1),
+            7.5
+            - 0.65 * s
+            + np.random.normal(0, 0.6),
             1,
             10
         )
 
+        # ----------------------------------------------------
+        # EMOTIONAL EXHAUSTION
+        # ----------------------------------------------------
+
         emotional_exhaustion = np.clip(
-            stress_score * 0.65
-            + fatigue_score * 0.35
-            + np.random.normal(0, 0.8),
+            4
+            + 0.8 * s
+            + 0.35 * fatigue_score
+            + np.random.normal(0, 0.5),
             1,
             10
         )
@@ -258,6 +442,7 @@ for pid in personnel_ids:
             round(mood_score, 1),
             round(emotional_exhaustion, 1)
         ])
+
 
 wellness_df = pd.DataFrame(
     wellness_records,
@@ -281,42 +466,99 @@ wellness_df.to_csv(
 # ============================================================
 # 6. BEHAVIORAL DATA
 # ============================================================
+#
+# Behavioral indicators now respond to the person's evolving
+# welfare state.
+# ============================================================
 
 behavior_records = []
 
+activity_state = {}
+
 for pid in personnel_ids:
 
-    baseline_activity = np.random.uniform(70, 100)
+    activity_state[pid] = np.random.uniform(
+        75,
+        95
+    )
 
-    for week in range(1, NUM_WEEKS + 1):
+    for week in range(
+        1,
+        NUM_WEEKS + 1
+    ):
 
-        attendance_score = np.clip(
-            np.random.normal(90, 6),
-            60,
-            100
+        # Get person's stress state
+        s = stress_state[pid]
+
+        # ----------------------------------------------------
+        # ACTIVITY
+        # ----------------------------------------------------
+
+        activity_state[pid] = (
+
+            0.80 * activity_state[pid]
+
+            + 0.20 * (
+                90 - 7 * max(s, 0)
+            )
+
+            + np.random.normal(
+                0,
+                3
+            )
         )
 
         activity_level = np.clip(
-            baseline_activity + np.random.normal(0, 8),
+            activity_state[pid],
             20,
             100
         )
 
+        # ----------------------------------------------------
+        # ATTENDANCE
+        # ----------------------------------------------------
+
+        attendance_score = np.clip(
+            92
+            - 2.5 * max(s, 0)
+            + np.random.normal(0, 3),
+            60,
+            100
+        )
+
+        # ----------------------------------------------------
+        # PERFORMANCE
+        # ----------------------------------------------------
+
         performance_score = np.clip(
-            np.random.normal(80, 10),
+            82
+            - 3.0 * max(s, 0)
+            + np.random.normal(0, 5),
             40,
             100
         )
 
+        # ----------------------------------------------------
+        # SOCIAL WITHDRAWAL
+        # ----------------------------------------------------
+
         social_withdrawal = np.clip(
-            np.random.normal(3.5, 1.5),
+            3
+            + 1.0 * max(s, 0)
+            + np.random.normal(0, 0.6),
             1,
             10
         )
 
+        # ----------------------------------------------------
+        # BEHAVIORAL CHANGE
+        # ----------------------------------------------------
+
         behavioral_change = np.clip(
-            10 - activity_level / 12
-            + np.random.normal(0, 1),
+            2.5
+            + 1.1 * max(s, 0)
+            + (90 - activity_level) / 25
+            + np.random.normal(0, 0.6),
             1,
             10
         )
@@ -330,6 +572,7 @@ for pid in personnel_ids:
             round(social_withdrawal, 1),
             round(behavioral_change, 1)
         ])
+
 
 behavior_df = pd.DataFrame(
     behavior_records,
@@ -358,8 +601,13 @@ print("\n==============================================")
 print(" SYNTHETIC DATASETS CREATED SUCCESSFULLY")
 print("==============================================\n")
 
-print(f"Personnel: {NUM_PERSONNEL}")
-print(f"Weeks per personnel: {NUM_WEEKS}")
+print(
+    f"Personnel: {NUM_PERSONNEL}"
+)
+
+print(
+    f"Weeks per personnel: {NUM_WEEKS}"
+)
 
 print("\nFiles created:")
 
