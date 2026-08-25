@@ -380,67 +380,11 @@ for pid in personnel_ids:
             4,
             9
         )
-
-        # ----------------------------------------------------
-        # FATIGUE
-        # ----------------------------------------------------
-
-        fatigue_score = np.clip(
-            4.5
-            + 1.0 * s
-            + 0.4 * (
-                7 - sleep_hours
-            )
-            + np.random.normal(0, 0.6),
-            1,
-            10
-        )
-
-        # ----------------------------------------------------
-        # STRESS SCORE
-        # ----------------------------------------------------
-
-        stress_score = np.clip(
-            5
-            + 0.9 * s
-            + np.random.normal(0, 0.6),
-            1,
-            10
-        )
-
-        # ----------------------------------------------------
-        # MOOD
-        # ----------------------------------------------------
-
-        mood_score = np.clip(
-            7.5
-            - 0.65 * s
-            + np.random.normal(0, 0.6),
-            1,
-            10
-        )
-
-        # ----------------------------------------------------
-        # EMOTIONAL EXHAUSTION
-        # ----------------------------------------------------
-
-        emotional_exhaustion = np.clip(
-            4
-            + 0.8 * s
-            + 0.35 * fatigue_score
-            + np.random.normal(0, 0.5),
-            1,
-            10
-        )
-
         wellness_records.append([
             pid,
             week,
             round(sleep_hours, 1),
-            round(fatigue_score, 1),
-            round(stress_score, 1),
-            round(mood_score, 1),
-            round(emotional_exhaustion, 1)
+            
         ])
 
 
@@ -450,10 +394,7 @@ wellness_df = pd.DataFrame(
         "personnel_id",
         "week",
         "sleep_hours",
-        "fatigue_score",
-        "stress_score",
-        "mood_score",
-        "emotional_exhaustion"
+        
     ]
 )
 
@@ -525,54 +466,7 @@ for pid in personnel_ids:
             60,
             100
         )
-
-        # ----------------------------------------------------
-        # PERFORMANCE
-        # ----------------------------------------------------
-
-        performance_score = np.clip(
-            82
-            - 3.0 * max(s, 0)
-            + np.random.normal(0, 5),
-            40,
-            100
-        )
-
-        # ----------------------------------------------------
-        # SOCIAL WITHDRAWAL
-        # ----------------------------------------------------
-
-        social_withdrawal = np.clip(
-            3
-            + 1.0 * max(s, 0)
-            + np.random.normal(0, 0.6),
-            1,
-            10
-        )
-
-        # ----------------------------------------------------
-        # BEHAVIORAL CHANGE
-        # ----------------------------------------------------
-
-        behavioral_change = np.clip(
-            2.5
-            + 1.1 * max(s, 0)
-            + (90 - activity_level) / 25
-            + np.random.normal(0, 0.6),
-            1,
-            10
-        )
-
-        behavior_records.append([
-            pid,
-            week,
-            round(attendance_score, 1),
-            round(activity_level, 1),
-            round(performance_score, 1),
-            round(social_withdrawal, 1),
-            round(behavioral_change, 1)
-        ])
-
+        
 
 behavior_df = pd.DataFrame(
     behavior_records,
@@ -581,9 +475,7 @@ behavior_df = pd.DataFrame(
         "week",
         "attendance_score",
         "activity_level",
-        "performance_score",
-        "social_withdrawal",
-        "behavioral_change"
+        
     ]
 )
 
